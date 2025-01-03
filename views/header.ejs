@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Interaction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script type="module" src="https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js"></script>
+    <script type="module" src="https://unpkg.com/mitt/dist/mitt.umd.js"></script>
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+        }
+        .main-content {
+            flex-grow: 1;
+        }
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 0%; /* Changed to unfold by default */
+            transition: width 0.5s;
+            overflow: hidden;
+        }
+        .sidebar.open {
+            width: 70%; /* No change needed here */
+        }
+        .sidebar.open > * {
+            display: block;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out 0.2s;
+        }
+        .sidebar:not(.open) > * {
+            display: none;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="app container mx-auto p-4 bg-white shadow-md rounded-md main-content">
