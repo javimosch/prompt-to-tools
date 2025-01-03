@@ -1,3 +1,3 @@
 <div v-for="item in items" :key="item.relativeURL">
-  <component :is="item.type === 'curl' ? 'curl-item' : item.type === 'graph' ? 'graph-item' : 'table-item'" :item="item" @execute-curl="executeCurl"></component>
+  <item-wrapper :item="item" @execute-curl="executeCurl"></item-wrapper>
 </div>

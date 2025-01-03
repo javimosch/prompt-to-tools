@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  
+  # prepare csv-to-rag image with full app embeded inside image
+  #backend:
+  #  image: node:20.17.0-alpine
+  #  working_dir: /app
+  # ports:
+  #    - "3000:3000"
+  #  volumes:
+  #    - ./:/app
+  #  command: ["npm","run", "dev"]
+  #  restart: unless-stopped
+
+  app:
+    image: node:20.17.0-alpine
+    working_dir: /app
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - LLM_RAW_COMPLETION_ENDPOINT=http://backend:3000/api/completion
+    volumes:
+      - ./:/app
+    command: ["npm","run","dev"]
+    restart: unless-stopped
+    depends_on:
+      - backend

@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js';
+import { onMounted, onUnmounted } from '/lib/vue.esm-browser.prod.js';
 
 export function useSidebar() {
 

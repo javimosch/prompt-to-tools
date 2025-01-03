@@ -1,4 +1,4 @@
-import { ref } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js';
+import { ref } from '/lib/vue.esm-browser.prod.js';
 export default function useMainPrompt() {
     const mainPrompt = ref('');
     const output = ref('');
@@ -14,7 +14,7 @@ export default function useMainPrompt() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: mainPrompt.value }),
+                body: JSON.stringify({ prompt: mainPrompt.value,socket:window.socket.id }),
             });
 
             if (!response.ok) {

@@ -8,84 +8,8 @@ const openai = new OpenAI({
 });
 
 // Define tools that the LLM can call
-const tools = [
-    {
-        type: 'function',
-        function: {
-            name: 'get_current_weather',
-            description: 'Get the current weather in a given location',
-            parameters: {
-                type: 'object',
-                properties: {
-                    location: {
-                        type: 'string',
-                        description: 'The city and state, e.g., San Francisco, CA',
-                    },
-                    unit: {
-                        type: 'string',
-                        enum: ['celsius', 'fahrenheit'],
-                    },
-                },
-                required: ['location'],
-            },
-        }
-    },
-    {
-        type: 'function',
-        function: {
-            name: 'query_schema_info',
-            description: 'Get information about database schema or OpenAPI specifications',
-            parameters: {
-                type: 'object',
-                properties: {
-                    query: {
-                        type: 'string',
-                        description: 'The query about schema or API specification',
-                    },
-                    schema_type: {
-                        type: 'string',
-                        enum: ['database', 'openapi'],
-                        description: 'Type of schema to query about'
-                    },
-                    max_tokens: {
-                        type: 'integer',
-                        description: 'Maximum number of tokens in the response',
-                        default: 150
-                    }
-                },
-                required: ['query', 'schema_type'],
-            },
-        }
-    },
-    {
-        type: 'function',
-        function: {
-            name: 'SignalFinalResponse',
-            description: 'Indicate that the LLM wants to submit a final response in HTML format with Tailwind CSS styling',
-            parameters: {
-                type: 'object',
-                properties: {
-                    finalResponseAsHTML: {
-                        type: 'string',
-                        description: 'The final response content to be submitted as HTML with Tailwind CSS styling'
-                    }
-                },
-                required: ['finalResponseAsHTML'],
-            },
-        }
-    }
-];
+const tools = require('./tool-schemas')
 
-// Mock function to simulate weather data
-function get_current_weather(location, unit = 'celsius') {
-    const weather = {
-        location: location,
-        temperature: unit === 'celsius' ? '22°C' : '72°F',
-        unit: unit,
-        forecast: ['sunny', 'windy'],
-    };
-    return weather;
-}
 
 // Actual function to query schema info using API calls
 async function query_schema_info(query, schema_type, max_tokens = 150) {
@@ -121,22 +45,25 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-7
 
 
 
-async function recursiveLLMCall(prompt, previousMessages = [], depth = 0, maxDepth = 6, bestResponse = "") {
+async function recursiveLLMCall(prompt, options = {}, previousMessages = [], depth = 0, maxDepth = 10, bestResponse = "") {
+
+    let socketId = options.socketId
 
     console.log('recursiveLLMCall', {
         prompt,
-        previousMessages,
+        socketId,
+        previousMessages: JSON.stringify(previousMessages,null,4),
         depth,
         maxDepth,
         bestResponse
     });
-    
+
     const messages = [
         ...previousMessages,
         { role: 'user', content: depth === 0 ? prompt : `Continue deep thinking OR if you consider you have a proper answer, call the SignalFinalResponse tool` }
     ];
 
-    
+
     if (depth >= maxDepth) {
         console.log('Maximum recursion depth reached');
         /* return {
@@ -147,15 +74,50 @@ async function recursiveLLMCall(prompt, previousMessages = [], depth = 0, maxDep
         return await getFinalResponse(bestResponse);
     }
 
-   
+
     try {
         const response = await openai.chat.completions.create({
             model: OPENROUTER_MODEL,
             messages: [
                 {
                     "role": "system",
-                    "content": `You are an expert in OpenAPI specifications and database schemas. When users ask about OpenAPI specs, provide detailed explanations of endpoints, methods, parameters, and responses. For database schema questions, describe table structures, relationships, data types, and common SQL operations. Always answer in the same language as the question, keep your responses clear and concise, utilize any available functions or tools, and format your answers in html. Ensure your explanations are accurate and up-to-date with the latest standards.`
-                  },
+                    "content": `You are an expert in OpenAPI specifications and database schemas. When users ask about OpenAPI specs, provide detailed explanations of endpoints, methods, parameters, and responses. For database schema questions, describe table structures, relationships, data types, and common SQL operations. Always answer in the same language as the question, keep your responses clear and concise, utilize any available functions or tools, and format your answers in html. Ensure your explanations are accurate and up-to-date with the latest standards.
+
+                    ## Guidelines
+
+                    ### Deep thinking: 
+                    If you consider you have a proper answer, call the SignalFinalResponse tool. 
+                    If the user asked to execute/run a SQL query, call the run_sql_tool tool before calling the SignalFinalResponse tool.
+
+                    ### Tools:
+                    
+                    
+                    #### run_sql_tool: 
+                        - Use it if the user requests to run a SQL query. 
+                        - Run generate_sql_tool first. 
+                        - Always include database in the SQL query (check [SQL tool context information])
+                        - Always limit to 200 results if no specified
+
+                    #### generate_sql_tool: 
+                        - Use it if the user asks for a SQL query.
+                        - Always include database in the SQL query (check [SQL tool context information])
+
+
+                    #### generate_curl_tool: 
+                        - Use it if the user asks for a cURL command.
+                    
+                    #### generate_table_tool: 
+                        - Use it if the user asks for data in a table format.
+                    
+                    #### SignalFinalResponse: 
+                        - Use it if the LLM wants to submit a final response in HTML format with Tailwind CSS styling.
+                    
+                    
+                    Here is some extra context information when you need it (using tools) (do not include this in the response):
+                    ${require('../config/llm-context')()}
+
+                    `
+                },
                 ...messages
             ],
             tools: tools,
@@ -165,6 +127,14 @@ async function recursiveLLMCall(prompt, previousMessages = [], depth = 0, maxDep
         console.log('response', {
             details: JSON.stringify(response, null, 2)
         })
+
+        if(response.error) {
+            console.log('response error', {
+                details: JSON.stringify(response, null, 2),
+                messages
+            })
+            return getFinalResponse(bestResponse)
+        }
 
         const responseMessage = response.choices[0].message;
 
@@ -176,21 +146,68 @@ async function recursiveLLMCall(prompt, previousMessages = [], depth = 0, maxDep
             const toolName = toolCall.function.name;
             const toolArgs = JSON.parse(toolCall.function.arguments);
 
-            let toolResponse;
+            console.log('Calling tool 1:', {
+                toolName,
+                toolArgs
+            });
+
+            let toolResponse = "No tool found";
 
             if (toolName === 'SignalFinalResponse') {
                 return await getFinalResponse(toolArgs.finalResponseAsHTML);
             }
 
-            if (toolName === 'get_current_weather') {
-                toolResponse = get_current_weather(toolArgs.location, toolArgs.unit);
-            } else if (toolName === 'query_schema_info') {
-                toolResponse = await query_schema_info(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens);
-            } else {
-                throw new Error(`Tool ${toolName} not found`);
+            if(toolName === 'run_sql_tool') {
+                toolResponse = await require('../tools/run-sql-tool')(socketId, toolArgs);
             }
 
-            console.log('Calling tool:', {
+
+            if (toolName === 'api_authenticate') {
+                toolResponse = await require('../tools/api-authenticate')(
+                    toolArgs.baseURL,
+                    toolArgs.authEndpointRelative, toolArgs.method, toolArgs.query, toolArgs.payload)
+            }
+
+            if (toolName === 'generate_curl_tool') {
+                toolResponse = await require('../tools/generate-curl-tool')(
+                    toolArgs.title,
+                    toolArgs.baseURL,
+                    toolArgs.relativeURL, 
+                    toolArgs.method, 
+                    toolArgs.query, 
+                    toolArgs.payload, 
+                    socketId
+                )
+            }
+
+            
+            if (toolName === 'query_schema_info') {
+                toolResponse = await query_schema_info(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens);
+            } 
+
+            if (toolName === 'generate_sql_tool') {
+                toolResponse = await require('../tools/generate-sql-tool')(
+                    toolArgs.title,
+                    toolArgs.sqlQuery,
+                    toolArgs.description,
+                    socketId
+                )
+            }
+
+            if (toolName === 'generate_table_tool') {
+                toolResponse = await require('../tools/generate-table-tool')(
+                    toolArgs.title,
+                    toolArgs.baseURL,
+                    toolArgs.relativeURL,
+                    toolArgs.method,
+                    toolArgs.query,
+                    toolArgs.payload,
+                    toolArgs.responseSchema,
+                    socketId
+                )
+            }
+
+            console.log('Calling tool 2:', {
                 toolName,
                 toolArgs,
                 toolResponse
@@ -209,7 +226,7 @@ async function recursiveLLMCall(prompt, previousMessages = [], depth = 0, maxDep
             ];
 
             // Recursive call with updated context
-            return await recursiveLLMCall(prompt, updatedMessages, depth + 1, maxDepth, bestResponse);
+            return await recursiveLLMCall(prompt, options, updatedMessages, depth + 1, maxDepth, bestResponse);
         }
 
         bestResponse = responseMessage.content;
@@ -227,25 +244,25 @@ async function recursiveLLMCall(prompt, previousMessages = [], depth = 0, maxDep
 
     async function getFinalResponse(finalResponse) {
 
-      
+
         // If finalResponse is empty, set it to the last message from history and pop it from the array
         if (!finalResponse) {
             finalResponse = bestResponse
         }
 
-      /*   const response = await openai.chat.completions.create({
-            model: OPENROUTER_MODEL,
-            messages: [
-                {
-                    role: 'system', content: `You are a markdown expect`
-                },
-                { role: 'user', content: `Convert the following to markdown: ${finalResponse}` }
-            ],
-        });
-
-        finalResponse = response.choices[0].message.content
- */
-        console.log('FINAL RESPONSE',{
+        /*   const response = await openai.chat.completions.create({
+              model: OPENROUTER_MODEL,
+              messages: [
+                  {
+                      role: 'system', content: `You are a markdown expect`
+                  },
+                  { role: 'user', content: `Convert the following to markdown: ${finalResponse}` }
+              ],
+          });
+  
+          finalResponse = response.choices[0].message.content
+   */
+        console.log('FINAL RESPONSE', {
             finalResponse
         })
 

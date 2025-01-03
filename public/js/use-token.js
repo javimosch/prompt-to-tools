@@ -1,12 +1,17 @@
-import { ref, computed } from "https://unpkg.com/vue@3/dist/vue.esm-browser.prod.js";
+import { ref, computed,onMounted } from "/lib/vue.esm-browser.prod.js";
 
 export default function useToken() {
-  const token = ref(localStorage.getItem("token") || "");
+  const token = ref();
 
   const setToken = (newToken) => {
     token.value = newToken;
     localStorage.setItem("token", newToken);
   };
+
+  
+    token.value = localStorage.getItem("token");
+
+    console.log("Token set to ",token.value.length);
 
   const headers = computed(() => ({
     Authorization: `Bearer ${token.value}`,
