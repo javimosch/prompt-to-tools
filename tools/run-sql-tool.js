@@ -23,9 +23,22 @@ module.exports = async function runSqlTool(socketId, data) {
 
         console.log('Connected to database successfully');
 
-        // Execute the query
-        const [rows] = await connection.execute(data.query);
-        console.log('Query executed successfully, rows:', rows.length);
+        // Set a timeout for the query
+        const timeoutPromise = new Promise((_, reject) => setTimeout(async () => {
+            await connection.end(); // Close the connection on timeout
+            reject(new Error('SQL execution timed out'));
+        }, 10000));
+
+        // Execute the query with timeout
+        const queryPromise = connection.execute(data.query);
+        
+        try {
+            const [rows] = await Promise.race([queryPromise, timeoutPromise]);
+            console.log('Query executed successfully, rows:', rows.length);
+        } catch (error) {
+            console.error('Query execution failed:', error.message);
+            return { error: error.message };
+        }
 
         // Close the connection
         await connection.end();
@@ -65,7 +78,6 @@ module.exports = async function runSqlTool(socketId, data) {
         console.log('Sending requestTableItemComplete');
         global.io.to(socketId).emit('requestTableItemComplete', tableConfig);
 
-
         console.log('Table configuration sent to client');
 
         return { success: 'SQL executed and table configuration sent to client' };
@@ -74,7 +86,6 @@ module.exports = async function runSqlTool(socketId, data) {
             message: error.message,
             stack: error.stack
         });
-        //return { error: `SQL execution fail: ${error.message}` };
-        return `SQL execution fail: ${error.message}`
+        return `SQL execution fail: ${error.message}`;
     }
 }

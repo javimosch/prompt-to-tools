@@ -64,6 +64,8 @@ async function recursiveLLMCall(prompt, options = {}, previousMessages = [], dep
     ];
 
 
+    let tool_choice = 'required'
+
     if (depth >= maxDepth) {
         console.log('Maximum recursion depth reached');
         /* return {
@@ -71,7 +73,8 @@ async function recursiveLLMCall(prompt, options = {}, previousMessages = [], dep
             depth,
             timestamp: new Date().toISOString()
         }; */
-        return await getFinalResponse(bestResponse);
+        //return await getFinalResponse(bestResponse);
+        tool_choice = 'none' //Submit final answer
     }
 
 
@@ -81,17 +84,43 @@ async function recursiveLLMCall(prompt, options = {}, previousMessages = [], dep
             messages: [
                 {
                     "role": "system",
-                    "content": `You are an expert in OpenAPI specifications and database schemas. When users ask about OpenAPI specs, provide detailed explanations of endpoints, methods, parameters, and responses. For database schema questions, describe table structures, relationships, data types, and common SQL operations. Always answer in the same language as the question, keep your responses clear and concise, utilize any available functions or tools, and format your answers in html. Ensure your explanations are accurate and up-to-date with the latest standards.
+                    "content": `You are an expert in OpenAPI specifications and database schemas. When users ask about OpenAPI specs, provide detailed explanations of endpoints, methods, parameters, and responses. For database schema questions, describe table structures, relationships, data types, and common SQL operations. 
 
                     ## Guidelines
 
+                    ### Max iterations
+
+                    - You only have ${depth}/${maxDepth} iterations left
+
                     ### Deep thinking: 
-                    If you consider you have a proper answer, call the SignalFinalResponse tool. 
-                    If the user asked to execute/run a SQL query, call the run_sql_tool tool before calling the SignalFinalResponse tool.
+                    - If you consider you have a proper answer, call the SignalFinalResponse tool. 
+                    - Do not call the SignalFinalResponse tool if the an SQL failed to run and you didn't tried to run again
+                    - If the user asked to execute/run a SQL query, call the run_sql_tool tool before calling the SignalFinalResponse tool.
+                    - Use any available functions or tools, multiple times if needed
+                    - If an SQL fail run to, try to reason (with deep_thinking_tool) why the SQL fail run to and how to fix it and call the tool again (up to 3 times)
+                    - If the user asked to run an SQL query and it failed to run, try again with different workarounds and do not expect the user to run it manually. Expend the max iterations trying to find a solution
+                    - If an tool fail, try to run the deep thinking tool to find the reason and how to fix it
+
+                    ### Answers
+
+                    - Always answer in the same language as the question
+                    - keep your responses clear and concise
+                    - Ensure your explanations are accurate and up-to-date with the latest standards.
+
+                    ### Final answer sections:
+
+                    - Global answer section
+                    - Deep thinking section: List the thoughts you had during the conversation including why you decided to call the tools and what tools you called
+                    - Format the entire answer in html and tailwind css
 
                     ### Tools:
                     
+                    #### deep_thinking_tool: 
+                        - Use it if you consider you have a proper answer.
                     
+                    #### query_schema_info:
+                        - Use this tool to debug issues and get information about the OpenAPI specification or the database schema.
+
                     #### run_sql_tool: 
                         - Use it if the user requests to run a SQL query. 
                         - Run generate_sql_tool first. 
@@ -111,6 +140,7 @@ async function recursiveLLMCall(prompt, options = {}, previousMessages = [], dep
                     
                     #### SignalFinalResponse: 
                         - Use it if the LLM wants to submit a final response in HTML format with Tailwind CSS styling.
+                        - Do not call this tool if the user asked for RUN/Execute SQL and the run_sql_tool was not called yet
                     
                     
                     Here is some extra context information when you need it (using tools) (do not include this in the response):
@@ -121,7 +151,7 @@ async function recursiveLLMCall(prompt, options = {}, previousMessages = [], dep
                 ...messages
             ],
             tools: tools,
-            tool_choice: 'required',
+            tool_choice: tool_choice,
         });
 
         console.log('response', {
@@ -142,90 +172,99 @@ async function recursiveLLMCall(prompt, options = {}, previousMessages = [], dep
 
         // If the LLM wants to call a tool
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
-            const toolCall = responseMessage.tool_calls[0]; // Handle first tool call
-            const toolName = toolCall.function.name;
-            const toolArgs = JSON.parse(toolCall.function.arguments);
-
-            console.log('Calling tool 1:', {
-                toolName,
-                toolArgs
-            });
-
-            let toolResponse = "No tool found";
-
-            if (toolName === 'SignalFinalResponse') {
-                return await getFinalResponse(toolArgs.finalResponseAsHTML);
-            }
-
-            if(toolName === 'run_sql_tool') {
-                toolResponse = await require('../tools/run-sql-tool')(socketId, toolArgs);
-            }
-
-
-            if (toolName === 'api_authenticate') {
-                toolResponse = await require('../tools/api-authenticate')(
-                    toolArgs.baseURL,
-                    toolArgs.authEndpointRelative, toolArgs.method, toolArgs.query, toolArgs.payload)
-            }
-
-            if (toolName === 'generate_curl_tool') {
-                toolResponse = await require('../tools/generate-curl-tool')(
-                    toolArgs.title,
-                    toolArgs.baseURL,
-                    toolArgs.relativeURL, 
-                    toolArgs.method, 
-                    toolArgs.query, 
-                    toolArgs.payload, 
-                    socketId
-                )
-            }
-
             
-            if (toolName === 'query_schema_info') {
-                toolResponse = await query_schema_info(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens);
-            } 
+            let updatedMessages = [...messages, responseMessage];
+            
+            // Handle all tool calls sequentially
+            for (const toolCall of responseMessage.tool_calls) {
+                const toolName = toolCall.function.name;
+                const toolArgs = JSON.parse(toolCall.function.arguments);
 
-            if (toolName === 'generate_sql_tool') {
-                toolResponse = await require('../tools/generate-sql-tool')(
-                    toolArgs.title,
-                    toolArgs.sqlQuery,
-                    toolArgs.description,
-                    socketId
-                )
-            }
+                console.log('Calling tool:', {
+                    toolName,
+                    toolArgs
+                });
 
-            if (toolName === 'generate_table_tool') {
-                toolResponse = await require('../tools/generate-table-tool')(
-                    toolArgs.title,
-                    toolArgs.baseURL,
-                    toolArgs.relativeURL,
-                    toolArgs.method,
-                    toolArgs.query,
-                    toolArgs.payload,
-                    toolArgs.responseSchema,
-                    socketId
-                )
-            }
+                let toolResponse = "No tool found";
 
-            console.log('Calling tool 2:', {
-                toolName,
-                toolArgs,
-                toolResponse
-            });
-
-            // Add tool result to message history
-            const updatedMessages = [
-                ...messages,
-                responseMessage,
-                {
-                    role: 'tool',
-                    tool_call_id: toolCall.id,
-                    //name: toolName,
-                    content: JSON.stringify(toolResponse)
+                if (toolName === 'SignalFinalResponse') {
+                    return await getFinalResponse(toolArgs.finalResponseAsHTML);
                 }
-            ];
 
-            // Recursive call with updated context
+                if(toolName === 'run_sql_tool') {
+                    toolResponse = await require('../tools/run-sql-tool')(socketId, toolArgs);
+                }
+
+                if(toolName === 'generate_chart_tool') {
+                    toolResponse = await require('../tools/generate-chart-tool')(socketId, toolArgs);
+                }
+
+                if(toolName === 'deep_thinking_tool') {
+                    toolResponse = await require('../tools/deep-thinking-tool')(toolArgs.thoughts, toolArgs.nextAction);
+                }
+
+                if (toolName === 'api_authenticate') {
+                    toolResponse = await require('../tools/api-authenticate')(
+                        toolArgs.baseURL,
+                        toolArgs.authEndpointRelative, toolArgs.method, toolArgs.query, toolArgs.payload)
+                }
+
+                if (toolName === 'generate_curl_tool') {
+                    toolResponse = await require('../tools/generate-curl-tool')(
+                        toolArgs.title,
+                        toolArgs.baseURL,
+                        toolArgs.relativeURL, 
+                        toolArgs.method, 
+                        toolArgs.query, 
+                        toolArgs.payload, 
+                        socketId
+                    )
+                }
+
+                if (toolName === 'query_schema_info') {
+                    toolResponse = await query_schema_info(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens);
+                } 
+
+                if (toolName === 'generate_sql_tool') {
+                    toolResponse = await require('../tools/generate-sql-tool')(
+                        toolArgs.title,
+                        toolArgs.sqlQuery,
+                        toolArgs.description,
+                        socketId
+                    )
+                }
+
+                if (toolName === 'generate_table_tool') {
+                    toolResponse = await require('../tools/generate-table-tool')(
+                        toolArgs.title,
+                        toolArgs.baseURL,
+                        toolArgs.relativeURL,
+                        toolArgs.method,
+                        toolArgs.query,
+                        toolArgs.payload,
+                        toolArgs.responseSchema,
+                        socketId
+                    )
+                }
+
+                console.log('Tool response:', {
+                    toolName,
+                    toolArgs,
+                    toolResponse
+                });
+
+                // Add tool result to message history
+                updatedMessages = [
+                    ...updatedMessages,
+                    {
+                        role: 'tool',
+                        tool_call_id: toolCall.id,
+                        content: JSON.stringify(toolResponse)
+                    }
+                ];
+            }
+
+            // Continue the conversation with all tool responses
             return await recursiveLLMCall(prompt, options, updatedMessages, depth + 1, maxDepth, bestResponse);
         }
 

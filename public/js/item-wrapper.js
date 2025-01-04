@@ -7,13 +7,22 @@ export default {
                     Duplicate
                 </button>
             </div>
-            <component 
-                :is="item.type === 'curl' ? 'curl-item' : 
-                     item.type === 'sql' ? 'sql-item' :
-                     item.type === 'graph' ? 'graph-item' : 'table-item'" 
-                :item="item" 
-                @execute-curl="executeCurl">
-            </component>
+            <curl-item v-if="item.type === 'curl'"
+                 :item="item"
+                 @execute-curl="executeCurl">
+            </curl-item>
+            <table-item v-else-if="item.type === 'table'"
+                 :item="item">
+            </table-item>
+            <graph-item v-else-if="item.type === 'graph'"
+                 :item="item">
+            </graph-item>
+            <sql-item v-else-if="item.type === 'sql'"
+                 :item="item">
+            </sql-item>
+            <chart-item v-else-if="item.type === 'chart'"
+                 :item="item">
+            </chart-item>
         </div>
     `,
     methods: {

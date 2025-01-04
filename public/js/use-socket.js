@@ -19,6 +19,15 @@ export default function useSocket() {
     window.mitt.emit('requestSqlItemComplete', data);
   });
 
+  socket.on('promptResponse', (response) => {
+    // No implementation provided in the instructions
+  });
+
+  socket.on('requestChartItemComplete', (chartConfig) => {
+    console.log('Chart configuration received:', chartConfig);
+    window.mitt.emit('add-item', chartConfig);
+  });
+
   socket.on('requestTableItemComplete', (data) => {
     console.log('Socket: got requestTableItemComplete', data);
     window.mitt.emit('requestTableItemComplete', data);

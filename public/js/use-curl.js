@@ -1,5 +1,6 @@
 import useToken from "./use-token.js";
 import { ref, watch, onMounted } from "/lib/vue.esm-browser.prod.js";
+
 export default function useCurl() {
     const items = ref([]);
 
@@ -58,21 +59,33 @@ export default function useCurl() {
             items.value = JSON.parse(storedItems);
         }
 
-        window.mitt.on("requestCurlItemComplete", (item) => {
-            const headers = useHeaders();
-            console.log("requestCurlItemComplete", { item });
-            item.fullUrl = new URL(item.baseURL + item.relativeURL)
-
-            item.curlExampleAsHTML = `
-      <div>
-      curl -X ${item.method} "${item.fullUrl}" \\<br>
-      ${headers.Authorization ? `-H "Authorization: ${headers.Authorization}" ` : ''}
-      ${Object.entries(item.query).length > 0 ? `\\<br>` + Object.entries(item.query).map(([key, value]) => `-d "${key}=${value}"`).join(' ') : ''}
-      </div>
-      `
-
-            items.value.push(item);
+        // Listen for add-item events
+        window.mitt.on('add-item', (newItem) => {
+            console.log('Adding new item:', newItem);
+            items.value.push(newItem);
         });
+
+        // Listen for remove-item events
+        window.mitt.on('remove-item', (itemToRemove) => {
+            console.log('Removing item:', itemToRemove);
+            const index = items.value.findIndex(item => item.id === itemToRemove.id);
+            if (index !== -1) {
+                items.value.splice(index, 1);
+            }
+        });
+
+        // Listen for chart item events
+        window.mitt.on('requestChartItemComplete', (chartConfig) => {
+            console.log('Chart configuration received in useCurl:', chartConfig);
+            items.value.push({
+                ...chartConfig,
+                id: chartConfig.id || Math.random().toString(36).substring(2, 9),
+                type: 'chart'
+            });
+        });
+
+        // Listen for table item events
+        window.mitt.on('requestTableItemComplete',updateOrAddItem);
 
         window.mitt.on('requestSqlItemComplete', (data) => {
             items.value.push(data);
@@ -98,12 +111,7 @@ export default function useCurl() {
             }
         }
 
-        window.mitt.on('requestTableItemComplete', updateOrAddItem);
         window.mitt.on('requestTableItemPartial', updateOrAddItem);
-
-        window.mitt.on("remove-item", (itemToRemove) => {
-            items.value = items.value.filter((item) => JSON.stringify(item) !== JSON.stringify(itemToRemove));
-        });
 
         window.mitt.on("duplicate-item", (itemToDuplicate) => {
             // Find the index of the original item
@@ -119,6 +127,34 @@ export default function useCurl() {
                 items.value.push(itemToDuplicate);
             }
         });
+
+        window.mitt.on("requestCurlItemComplete", (item) => {
+            const headers = useHeaders();
+            console.log("requestCurlItemComplete", { item });
+            item.fullUrl = new URL(item.baseURL + item.relativeURL)
+
+            item.curlExampleAsHTML = `
+      <div>
+      curl -X ${item.method} "${item.fullUrl}" \\<br>
+      ${headers.Authorization ? `-H "Authorization: ${headers.Authorization}" ` : ''}
+      ${Object.entries(item.query).length > 0 ? `\\<br>` + Object.entries(item.query).map(([key, value]) => `-d "${key}=${value}"`).join(' ') : ''}
+      </div>
+      `
+
+            items.value.push(item);
+        });
+
+        // Clean up event listeners on unmount
+        return () => {
+            window.mitt.off('add-item');
+            window.mitt.off('remove-item');
+            window.mitt.off('requestChartItemComplete');
+            window.mitt.off('requestTableItemComplete');
+            window.mitt.off('requestSqlItemComplete');
+            window.mitt.off('requestTableItemPartial');
+            window.mitt.off('duplicate-item');
+            window.mitt.off('requestCurlItemComplete');
+        };
     });
 
     // Watch for changes in the items array and persist to localStorage

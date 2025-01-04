@@ -152,6 +152,65 @@ const tools = [
             }
         }
     },
+    {
+        type: 'function',
+        function: {
+            name: 'generate_chart_tool',
+            description: 'Generate a chart using Chart.js. Executes a SQL query and displays the results in a chart format. Supports bar and line charts.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    query: {
+                        type: 'string',
+                        description: 'SQL query to get the data. Should return columns for labels and values.'
+                    },
+                    title: {
+                        type: 'string',
+                        description: 'Title of the chart'
+                    },
+                    chartType: {
+                        type: 'string',
+                        description: 'Type of chart (bar or line)',
+                        enum: ['bar', 'line']
+                    },
+                    labelColumn: {
+                        type: 'string',
+                        description: 'Column name to use for labels (x-axis). If not provided, first column is used.'
+                    },
+                    valueColumn: {
+                        type: 'string',
+                        description: 'Column name to use for values (y-axis). If not provided, second column is used.'
+                    },
+                    datasetLabel: {
+                        type: 'string',
+                        description: 'Label for the dataset in the chart legend'
+                    }
+                },
+                required: ['query']
+            }
+        }
+    },
+    {
+        type: 'function',
+        function: {
+            name: 'deep_thinking_tool',
+            description: 'Analyze the current situation and next planned action using a single LLM completion. This tool helps in understanding the reasoning behind decisions and validating next steps.',
+            parameters: {
+                type: 'object',
+                properties: {
+                    thoughts: {
+                        type: 'string',
+                        description: 'Description of what has happened until now, including context and decisions made'
+                    },
+                    nextAction: {
+                        type: 'string',
+                        description: 'Description of the next action that will be taken'
+                    }
+                },
+                required: ['thoughts', 'nextAction']
+            }
+        }
+    },
     ...(sqlToolAvailable ? [{
         type: 'function',
         function: {

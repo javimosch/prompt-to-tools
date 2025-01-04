@@ -9,6 +9,7 @@ import GraphItem from './graph-item.js';
 import SqlItem from './sql-item.js';
 import ItemWrapper from './item-wrapper.js';
 import useMainPrompt from "./use-main-prompt.js";
+import ChartItem from './chart-item.js';
 
 window.mitt = mitt();
 
@@ -42,5 +43,6 @@ app.component('table-item', TableItem);
 app.component('graph-item', GraphItem);
 app.component('sql-item', SqlItem);
 app.component('item-wrapper', ItemWrapper);
+app.component('chart-item', ChartItem);
 
 app.mount(".app");
