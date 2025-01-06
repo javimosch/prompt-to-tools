@@ -1,4 +1,4 @@
-import { ref } from "/lib/vue.esm-browser.prod.js";
+import { ref, inject } from "/lib/vue.esm-browser.prod.js";
 export default function useSocket() {
   const socket = io();
 
@@ -7,6 +7,27 @@ export default function useSocket() {
   socket.on('connect', () => {
     console.log('Connected to socket server');
     socketRef.value = socket.id;
+  });
+
+  function testToast() {
+    const sampleData = {
+      message: 'This is a test toast message!',
+      type: 'info' // You can specify the type if needed
+    };
+    //const showToast = inject('showToast');
+
+    window.showToast(sampleData);
+
+  }
+  window.testToast = testToast;
+
+  socket.on('thinking', (data) => {
+    console.log('Socket: got thinking', {
+      data
+    });
+
+    window.showToast(data);
+
   });
 
   socket.on('requestCurlItemComplete', (data) => {

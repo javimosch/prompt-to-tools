@@ -10,12 +10,14 @@ import SqlItem from './sql-item.js';
 import ItemWrapper from './item-wrapper.js';
 import useMainPrompt from "./use-main-prompt.js";
 import ChartItem from './chart-item.js';
+import { useToast, ToastContainer } from "./use-toast.js";
 
 window.mitt = mitt();
 
 const app = createApp({
   setup() {
     useSidebar();
+    const {toasts} = useToast();
     const { socketRef } = useSocket();
     
     const { token, setToken, headers } = useToken();
@@ -34,6 +36,7 @@ const app = createApp({
       loading,
       error,
       executePrompt,
+      toasts,
     };
   },
 });
@@ -44,5 +47,6 @@ app.component('graph-item', GraphItem);
 app.component('sql-item', SqlItem);
 app.component('item-wrapper', ItemWrapper);
 app.component('chart-item', ChartItem);
+app.component('toast-container', ToastContainer);
 
 app.mount(".app");

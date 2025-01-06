@@ -13,7 +13,7 @@ const tools = [
                 properties: {
                     query: {
                         type: 'string',
-                        description: 'The query about schema or API specification',
+                        description: 'The query about DB schema or API specification. Try to be as specific as possible i.g what is the name of the table for storing users? or what is the name of the endpoint for user login?',
                     },
                     schema_type: {
                         type: 'string',
@@ -215,7 +215,10 @@ const tools = [
         type: 'function',
         function: {
             name: 'run_sql_tool',
-            description: 'Execute SQL queries and display results in a table format. The results will be shown directly in the UI without pagination. Use this tool when the user needs to execute/run a SQL query and it does not ask for a simple SQL query generation',
+            description: `Execute SQL queries and display results in a table format. The results will be shown directly in the UI without pagination. 
+            - Use this tool when the user needs to execute/run a SQL query and it does not ask for a simple SQL query generation
+            - Use this tool when the user ask to print some data i.g "Print user named jarancibia (login) and no endpoint is available to accomplish that precise query"
+            `,
             parameters: {
                 type: 'object',
                 properties: {

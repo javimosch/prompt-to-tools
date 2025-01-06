@@ -44,8 +44,18 @@ export default {
                 // Destroy existing chart if any
                 this.destroyChart();
 
+                // Wait for the next DOM update cycle
+                await this.$nextTick();
+                
                 const canvas = this.$refs.chartCanvas;
+                if (!canvas) {
+                    throw new Error('Canvas element not found');
+                }
+
                 const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    throw new Error('Could not get canvas context');
+                }
 
                 // Create new chart
                 this.chart = new Chart(ctx, {

@@ -19,7 +19,7 @@ export default function useCurl() {
         try {
             const headers = useHeaders();
             const url = new URL(item.baseURL + item.relativeURL);
-            
+
             // Add query parameters
             Object.entries(item.query || {}).forEach(([key, value]) => {
                 url.searchParams.append(key, value);
@@ -40,10 +40,10 @@ export default function useCurl() {
 
             const data = await response.json();
             console.log('Curl execution response:', data);
-            
+
             // Update item with result
             item.result = JSON.stringify(data, null, 2);
-            
+
             return data;
         } catch (error) {
             console.error('Error executing curl:', error);
@@ -56,7 +56,8 @@ export default function useCurl() {
         // Load items from localStorage
         const storedItems = localStorage.getItem('items');
         if (storedItems) {
-            items.value = JSON.parse(storedItems);
+            items.value = JSON.parse(storedItems).filter(item => item.type);
+            localStorage.setItem('items', JSON.stringify(items.value));
         }
 
         // Listen for add-item events
@@ -85,7 +86,7 @@ export default function useCurl() {
         });
 
         // Listen for table item events
-        window.mitt.on('requestTableItemComplete',updateOrAddItem);
+        window.mitt.on('requestTableItemComplete', updateOrAddItem);
 
         window.mitt.on('requestSqlItemComplete', (data) => {
             items.value.push(data);
@@ -94,10 +95,12 @@ export default function useCurl() {
         function updateOrAddItem(data) {
             const itemToUpdate = items.value.find(item => item.id === data.id);
             if (itemToUpdate) {
-                if (itemToUpdate.data) {
-                    itemToUpdate.data.push(...data.data);
-                } else {
-                    Object.assign(itemToUpdate, data);
+                itemToUpdate.data = itemToUpdate.data || []
+                itemToUpdate.data.push(...data.data);
+                for (const key in data) {
+                    if (data.hasOwnProperty(key) && key !== 'data') {
+                        itemToUpdate[key] = data[key];
+                    }
                 }
             } else {
                 if (data.baseURL && data.relativeURL) {
@@ -108,6 +111,7 @@ export default function useCurl() {
                     }
                 }
                 items.value.push(data);
+                console.log('Adding new item:', data);
             }
         }
 

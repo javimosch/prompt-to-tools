@@ -5,7 +5,7 @@ global.app.post('/api/completion', async (req, res) => {
 
     try {
         console.log('API /api/completion received prompt:', prompt);
-        const result = await recursiveLLMCall(prompt,{socketId:socket});
+        const result = await recursiveLLMCall("initial",prompt,{socketId:socket});
         res.json({ content: result.content });
     } catch (error) {
         console.error('API /api/completion error:', error);
