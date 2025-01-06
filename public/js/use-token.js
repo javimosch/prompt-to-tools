@@ -8,8 +8,7 @@ export default function useToken() {
     localStorage.setItem("token", newToken);
   };
 
-  
-    token.value = localStorage.getItem("token");
+    token.value = localStorage.getItem("token") || '';
 
     console.log("Token set to ",token.value.length);
 
