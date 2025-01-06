@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+
+  app:
+    build: .
+    working_dir: /app
+    expose:
+      - "3005"
+    command: ["npm","run","dev"]
+    restart: unless-stopped
