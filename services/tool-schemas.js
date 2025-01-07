@@ -120,7 +120,7 @@ const tools = [
                 properties: {
                     title: {
                         type: 'string',
-                        description: 'Title for the table display'
+                        description: 'Title for the table display. Try to be specific about the data origin (i.g Real-time data from vehicle X and dates between Y and Z)'
                     },
                     baseURL: {
                         type: 'string',
