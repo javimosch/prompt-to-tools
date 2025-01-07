@@ -3,7 +3,6 @@ import { ref, watch, onMounted } from "/lib/vue.esm-browser.dev.js";
 
 export default function useToolItems() {
     const items = ref([]);
-
     // Function to save items to localStorage
     function saveItemsToLocalStorage(items) {
         localStorage.setItem('items', JSON.stringify(items));
@@ -154,6 +153,35 @@ export default function useToolItems() {
             items.value.push(item);
         });
 
+        // Listen for import-item events
+        window.mitt.on('import-item', async (itemJson) => {
+            try {
+                const item = JSON.parse(itemJson);
+                
+                // Validate item has required fields
+                if (!item.type) {
+                    throw new Error('Invalid item: missing type');
+                }
+
+                // Generate new ID to avoid conflicts
+                item.id = Math.random().toString(36).substring(2, 9);
+                
+                // Add the item
+                items.value.push(item);
+                
+                window.showToast({
+                    message: 'Tool imported successfully!',
+                    type: 'success'
+                });
+            } catch (error) {
+                console.error('Error importing item:', error);
+                window.showToast({
+                    message: 'Failed to import tool: ' + error.message,
+                    type: 'error'
+                });
+            }
+        });
+
         // Clean up event listeners on unmount
         return () => {
             window.mitt.off('add-item');
@@ -164,10 +192,11 @@ export default function useToolItems() {
             window.mitt.off('requestTableItemPartial');
             window.mitt.off('duplicate-item');
             window.mitt.off('requestCurlItemComplete');
+            window.mitt.off('import-item');
         };
     });
 
-    // Watch for changes in the items array and persist to localStorage
+    // Watch items for changes and save to localStorage
     watch(items, (newItems) => {
         saveItemsToLocalStorage(newItems);
     }, { deep: true });

@@ -5,7 +5,6 @@ export default {
     <div class="curl-item p-4 border rounded">
       
       <span class="font-bold text-blue-600">{{item.title}}</span>
-      <button @click="removeItem" class="float-right bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Remove</button>
       <h4 class="text-md font-medium">{{ item.method }} {{ item.fullUrl }}</h4>
       
         <div style="max-height: 100px; overflow-y: auto;" class="bg-gray-100 p-2 rounded break-words" v-html="item.curlExampleAsHTML">
@@ -21,9 +20,6 @@ export default {
     </div>
   `,
     methods: {
-        removeItem(){
-            window.mitt.emit('remove-item', this.item)
-        },
         useHeaders() {
             const { headers } = useToken();
             return headers.value;

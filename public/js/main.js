@@ -1,4 +1,4 @@
-import { createApp } from "/lib/vue.esm-browser.dev.js";
+import { createApp, ref } from "/lib/vue.esm-browser.dev.js";
 import { useSidebar } from "./use-sidebar.js";
 import useSocket from "./use-socket.js";
 import useToolItems from "./use-tool-items.js";
@@ -22,6 +22,20 @@ const app = createApp({
     
     const { token, setToken, headers } = useToken();
     const { items, executeCurl } = useToolItems();
+    const importText = ref('');
+    
+    const handleImport = () => {
+      if (importText.value) {
+        window.mitt.emit('import-item', importText.value);
+        importText.value = ''; // Clear input after import
+      }
+    };
+
+    const handlePaste = (event) => {
+      // Let v-model handle the paste
+      handleImport();
+    };
+
     const { 
         mainPrompt, 
         output, 
@@ -44,6 +58,9 @@ const app = createApp({
       setToken,
       headers,
       executeCurl,
+      importText,
+      handleImport,
+      handlePaste,
       mainPrompt,
       output,
       loading,

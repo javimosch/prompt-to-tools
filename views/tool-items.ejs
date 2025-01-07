@@ -1,3 +1,21 @@
 <div v-for="item in items" :key="item.relativeURL">
   <item-wrapper :item="item" @execute-curl="executeCurl"></item-wrapper>
 </div>
+<!-- Import Tool Section -->
+<div class="mb-4 p-4 border rounded">
+  <h3 class="text-lg font-semibold mb-2">Import Tool</h3>
+  <div class="flex gap-2">
+    <textarea 
+      v-model="importText"
+      class="flex-grow p-2 border rounded" 
+      placeholder="Paste tool configuration here..."
+      @paste="handlePaste"
+    ></textarea>
+    <button 
+      @click="handleImport" 
+      class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+    >
+      Import
+    </button>
+  </div>
+</div>

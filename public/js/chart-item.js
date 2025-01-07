@@ -9,9 +9,8 @@ export default {
     },
     template: `
         <div class="chart-item p-4 border rounded">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center">
                 <span class="font-bold text-blue-600">{{item.title}}</span>
-                <button @click="removeItem" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Remove</button>
             </div>
             
             <div v-if="error" class="mt-2 p-2 bg-red-100 text-red-700 rounded">
@@ -27,9 +26,6 @@ export default {
         this.renderChart();
     },
     methods: {
-        removeItem() {
-            window.mitt.emit('remove-item', this.item);
-        },
         destroyChart() {
             if (this.chart) {
                 this.chart.destroy();

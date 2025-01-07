@@ -19,10 +19,14 @@ export default {
     },
     template: `
       <div class="table-item p-4 border rounded">
-        <div class="flex justify-between items-center">
-            <span class="font-bold text-blue-600">{{item.title}}</span>
-            <button @click="removeItem" class="bg-red-500 text-white py-1 px-2 rounded hover:bg-red-600">Remove</button>
+        <div class="flex justify-between items-center mb-4">
+            <div class="font-bold text-blue-600">{{ item.title }}</div>
+            <div class="flex gap-2">
+                <button @click="toggleFilter" class="bg-blue-500 text-white py-1 px-2 rounded hover:bg-blue-600">Filter</button>
+                <button @click="toggleSort" class="bg-blue-500 text-white py-1 px-2 rounded hover:bg-blue-600">Sort</button>
+            </div>
         </div>
+        
         <h4 class="text-md font-medium" v-if="!item.data">{{ item.method }} {{ item.fullUrl }}</h4>
         
         <div class="flex gap-2 mt-2">
@@ -175,9 +179,6 @@ export default {
         }
     },
     methods: {
-        removeItem() {
-            window.mitt.emit('remove-item', this.item);
-        },
         toggleConfig() {
             this.showConfig = !this.showConfig;
             if (this.showConfig) {
