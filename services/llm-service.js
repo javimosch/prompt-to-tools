@@ -24,7 +24,7 @@ const getAvailableTools = (stepName) => {
      let availableTools;
      switch (stepName) {
          case 'initial':
-             availableTools = getTools(['deep_thinking_tool']);
+             availableTools = getTools(['deep_thinking_tool','generate_chart_tool','generate_curl_tool','generate_sql_tool','generate_table_tool']);
              break;
          case 'after_first_deep_think':
              availableTools = getTools(['query_schema_info','SignalFinalResponse']);
@@ -163,6 +163,8 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                     - When generating cURL commands to query endpoints, ensure we use available parameters (endpoint schemas/parameters) to be able to get the expected results
                     - Generating a Chart using cURL/Endpoints is not supported yet but it can be added in the future if requested to "@JAR (maintainer)"
                     - If the initial user query doesn't involve checking database/openapi specs, and you think you can provide an answer right away, go ahead an use the SignalFinalResponse tool.
+                    - If the user ask to call a tool again and the tool has already be called, then you can proceed to call the tool again.
+                    - If the user ask to call a tool but the tool has not been called yet, first use the deep_thinking_tool to reason next steps.
 
                     ### Answers
 

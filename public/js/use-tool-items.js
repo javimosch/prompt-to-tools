@@ -43,10 +43,22 @@ export default function useToolItems() {
             // Update item with result
             item.result = JSON.stringify(data, null, 2);
 
+            // Show success toast
+            window.showToast({
+                message: `cURL resolved OK, status: ${response.status}`,
+                type: 'success'
+            });
+
             return data;
         } catch (error) {
             console.error('Error executing curl:', error);
             item.error = error.message;
+
+            // Show failure toast
+            window.showToast({
+                message: `cURL failed with status ${error.message} (Check console logs or network tab for more info)`,
+                type: 'error'
+            });
             throw error;
         }
     }
