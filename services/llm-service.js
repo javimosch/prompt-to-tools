@@ -374,7 +374,24 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
 
         // If finalResponse is empty, set it to the last message from history (assistant)
         if (!finalResponse) {
-            finalResponse = messages.reverse().find(msg => msg.role === 'assistant'&&!!msg.content).content;
+            try {
+                const response = await openai.chat.completions.create({
+                    model: OPENROUTER_MODEL,
+                    messages: [
+                        {
+                            role: "system",
+                            content: 'You are a helpful assistant. There was no final response during a conversation with an LLM and you need to provide a final response to the user when he ask for it. Reply as if you were the original LLM. The conversation context is the following: ' + JSON.stringify(messages)
+                        }
+                    ]
+                });
+                finalResponse = response.choices[0].message;
+            } catch (error) {
+                console.error('Error during LLM call:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                finalResponse = 'I am unable to provide a final response at this moment. Please try again later.';
+            }
         }
 
 
