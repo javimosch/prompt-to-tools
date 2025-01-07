@@ -1,7 +1,7 @@
-import { createApp } from "/lib/vue.esm-browser.prod.js";
+import { createApp } from "/lib/vue.esm-browser.dev.js";
 import { useSidebar } from "./use-sidebar.js";
 import useSocket from "./use-socket.js";
-import useCurl from "./use-curl.js";
+import useToolItems from "./use-tool-items.js";
 import useToken from "./use-token.js";
 import CurlItem from './curl-item.js';
 import TableItem from './table-item.js';
@@ -10,33 +10,54 @@ import SqlItem from './sql-item.js';
 import ItemWrapper from './item-wrapper.js';
 import useMainPrompt from "./use-main-prompt.js";
 import ChartItem from './chart-item.js';
-import { useToast, ToastContainer } from "./use-toast.js";
+import { ToastContainer } from "./use-toast.js";
 
 window.mitt = mitt();
 
 const app = createApp({
   setup() {
     useSidebar();
-    const {toasts} = useToast();
+    
     const { socketRef } = useSocket();
     
     const { token, setToken, headers } = useToken();
-    const { items, executeCurl } = useCurl();
-    const { mainPrompt, output, loading, error, executePrompt } = useMainPrompt();
+    const { items, executeCurl } = useToolItems();
+    const { 
+        mainPrompt, 
+        output, 
+        loading, 
+        error, 
+        executePrompt, 
+        chatHistory,
+        threads,
+        activeThreadId,
+        createThread,
+        loadThread,
+        deleteThread,
+        renameThread,
+        canCreateNewThread
+    } = useMainPrompt();
 
     return {
       items,
-      executeCurl,
       token,
       setToken,
       headers,
-      socketRef,
+      executeCurl,
       mainPrompt,
       output,
       loading,
       error,
       executePrompt,
-      toasts,
+      chatHistory,
+      threads,
+      activeThreadId,
+      createThread,
+      loadThread,
+      deleteThread,
+      renameThread,
+      socketRef,
+      canCreateNewThread
     };
   },
 });

@@ -1,7 +1,7 @@
 import useToken from "./use-token.js";
-import { ref, watch, onMounted } from "/lib/vue.esm-browser.prod.js";
+import { ref, watch, onMounted } from "/lib/vue.esm-browser.dev.js";
 
-export default function useCurl() {
+export default function useToolItems() {
     const items = ref([]);
 
     // Function to save items to localStorage
@@ -77,7 +77,7 @@ export default function useCurl() {
 
         // Listen for chart item events
         window.mitt.on('requestChartItemComplete', (chartConfig) => {
-            console.log('Chart configuration received in useCurl:', chartConfig);
+            console.log('Chart configuration received in useToolItems:', chartConfig);
             items.value.push({
                 ...chartConfig,
                 id: chartConfig.id || Math.random().toString(36).substring(2, 9),
@@ -89,7 +89,13 @@ export default function useCurl() {
         window.mitt.on('requestTableItemComplete', updateOrAddItem);
 
         window.mitt.on('requestSqlItemComplete', (data) => {
-            items.value.push(data);
+            if (data.sqlQuery) {
+                items.value.push(data);
+            }else{
+                console.warn('No SQL query provided',{
+                    data
+                });
+            }
         });
 
         function updateOrAddItem(data) {

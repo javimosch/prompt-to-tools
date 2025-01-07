@@ -76,7 +76,7 @@ const tools = [
         type: 'function',
         function: {
             name: 'generate_curl_tool',
-            description: 'It sends a cURL configuration to the client, use this tool each time the user asks for a cURL command, but only if you already called query_schema_info previously',
+            description: 'It sends a cURL configuration to the client, use this tool each time the user asks for a cURL command, but only if you already called query_schema_info previously. Ensure you supply the base URL, relative URL and method as minimum. Possible parameters: title, baseURL, relativeURL, method, query, payload',
             parameters: {
                 type: 'object',
                 properties: {
@@ -99,11 +99,11 @@ const tools = [
                     },
                     query: {
                         type: 'object',
-                        description: 'Optional query parameters for the cURL request',
+                        description: 'Optional query parameters for GET requests',
                     },
                     payload: {
                         type: 'object',
-                        description: 'Optional payload for non GET requests',
+                        description: 'Optional payload/body for non GET requests',
                     }
                 },
                 required: ['relativeURL', 'method'],

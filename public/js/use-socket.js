@@ -1,4 +1,4 @@
-import { ref, inject } from "/lib/vue.esm-browser.prod.js";
+import { ref, inject } from "/lib/vue.esm-browser.dev.js";
 export default function useSocket() {
   const socket = io();
 

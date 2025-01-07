@@ -1,4 +1,4 @@
-import { ref, computed,onMounted } from "/lib/vue.esm-browser.prod.js";
+import { ref, computed,onMounted } from "/lib/vue.esm-browser.dev.js";
 
 export default function useToken() {
   const token = ref();

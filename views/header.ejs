@@ -6,7 +6,7 @@
     <title>API Interaction</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <script type="module" src="/lib/vue.esm-browser.prod.js"></script>
+    <script type="module" src="/lib/vue.esm-browser.dev.js"></script>
     
     <script type="module" src="/lib/mitt.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -40,6 +40,11 @@
             display: none;
             opacity: 0;
         }
+        
+        pre {
+            white-space: pre-wrap;
+        }
+        
     </style>
 </head>
 <body class="bg-gray-100 p-8">
