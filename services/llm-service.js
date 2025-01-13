@@ -24,13 +24,13 @@ const getAvailableTools = (stepName) => {
      let availableTools;
      switch (stepName) {
          case 'initial':
-             availableTools = getTools(['deep_thinking_tool','generate_chart_tool','generate_curl_tool','generate_sql_tool','generate_table_tool']);
+             availableTools = getTools(['query_information']);
              break;
          case 'after_first_deep_think':
-             availableTools = getTools(['query_schema_info','SignalFinalResponse']);
+             availableTools = getTools(['query_information','deep_thinking_tool','SignalFinalResponse']);
              break;
          case 'after_query_schema':
-            availableTools = getTools(['deep_thinking_tool']);
+            availableTools = getTools([]);
              break;
          case 'after_second_deep_think':
              availableTools = getTools()
@@ -59,11 +59,11 @@ const computeNextStep = (stepName) => {
 
 
 // Actual function to query schema info using API calls
-async function query_schema_info(query, schema_type, max_tokens = 150) {
+async function query_information(query, schema_type, max_tokens = 150, namespace = 'default') {
     try {
         const prompt = `Get information about ${schema_type === 'database' ? 'database schema' : 'OpenAPI specification'}: ${query}`;
 
-        const response = await axios.post(API_ENDPOINT, {
+        const response = await axios.post(getApiEndpoint(namespace), {
             prompt: prompt,
             max_tokens: max_tokens,
             temperature: 0.3 // Lower temperature for more focused responses
@@ -86,15 +86,18 @@ async function query_schema_info(query, schema_type, max_tokens = 150) {
 }
 
 // Main API endpoint and token (for raw output)
-const API_ENDPOINT = process.env.LLM_RAW_COMPLETION_ENDPOINT || 'http://localhost:3000/api/completion';
-const API_TOKEN = process.env.LLM_RAW_COMPLETION_API_KEY || ''
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct'
+const BASE_API_ENDPOINT = process.env.LLM_RAW_COMPLETION_ENDPOINT || 'http://localhost:3000/api';
+const API_TOKEN = process.env.LLM_RAW_COMPLETION_API_KEY || '';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct';
 
-
+const getApiEndpoint = (namespace = 'default') => {
+    return `${BASE_API_ENDPOINT}/ns/${namespace}/completion`;
+};
 
 async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, previousMessages = [], depth = 0, maxDepth = 10) {
 
     let socketId = options.socketId
+    const namespace = options.namespace || 'default';
 
     const logStatus = (prefix ='') => console.log(`${prefix}recursiveLLMCall`, {
         stepName,
@@ -112,7 +115,8 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
             }
         }),
         depth,
-        maxDepth
+        maxDepth,
+        namespace
     });
     //logStatus()
 
@@ -139,7 +143,7 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
             messages: [
                 {
                     "role": "system",
-                    "content": `You are an expert in OpenAPI specifications and database schemas. When users ask about OpenAPI specs, provide detailed explanations of endpoints, methods, parameters, and responses. For database schema questions, describe table structures, relationships, data types, and common SQL operations. There are also some tools available for you to use which are critial to your work.
+                    "content": `You are an intelligent assistant capable of querying various data sources, including MySQL databases, OpenAPI specifications, and application documentation. When a user asks for information, determine the appropriate source type and construct a precise query to retrieve the relevant data.
 
                     ## Guidelines
 
@@ -165,6 +169,7 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                     - If the initial user query doesn't involve checking database/openapi specs, and you think you can provide an answer right away, go ahead an use the SignalFinalResponse tool.
                     - If the user ask to call a tool again and the tool has already be called, then you can proceed to call the tool again.
                     - If the user ask to call a tool but the tool has not been called yet, first use the deep_thinking_tool to reason next steps.
+                    - If the user ask to try/test an sql/curl/request/endpoint, he probably want you to run a generation tool so that he can get the tool in the UI to try/test/view it
 
                     ### Answers
 
@@ -183,8 +188,8 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                     #### deep_thinking_tool: 
                         - Use it if you consider you have a proper answer.
                     
-                    #### query_schema_info:
-                        - Use this tool to debug issues and get information about the OpenAPI specification or the database schema.
+                    #### query_information:
+                        - Use this tool to get information about the OpenAPI specifications,database/mysql schemas, applications documentation or any other specifications related to business logic. Do not assume anything.
 
                     #### run_sql_tool: 
                         - Use it if the user requests to run a SQL query. 
@@ -319,8 +324,8 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                     )
                 }
 
-                if (toolName === 'query_schema_info') {
-                    toolResponse = await query_schema_info(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens);
+                if (toolName === 'query_information') {
+                    toolResponse = await query_information(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens, namespace);
                 } 
 
                 if (toolName === 'generate_sql_tool') {

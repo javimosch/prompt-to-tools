@@ -1,4 +1,14 @@
 <%- include('header') %>
+
+<div class="flex justify-end">
+    <select id="namespaceSelector" class="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="default">Default</option>
+        <option value="openapi">OpenAPI</option>
+        <option value="mysql">MySQL</option>
+        <option value="citipav">CitiPAV</option>
+    </select>
+</div>
+
         <h1 class="text-3xl font-bold mb-2">Prompt-to-tools</h1>
         <h2 class="text-1xl font-bold">cURL, SQL, Table, Graph</h2>
         <p class="text-sm text-gray-500 mb-2">Run SQL and Graph generation is not available in the online version yet</p>

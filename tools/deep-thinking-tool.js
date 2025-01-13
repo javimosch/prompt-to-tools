@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 const { OPENROUTER_API_KEY, OPENROUTER_MODEL } = process.env;
-
+const tools = require('../services/tool-schemas')
 module.exports = async function deepThinkingTool(context,thoughts, nextAction) {
     //console.log('Deep thinking about:', { thoughts, nextAction });
 
@@ -12,10 +12,13 @@ module.exports = async function deepThinkingTool(context,thoughts, nextAction) {
             Planned Next Action:
             ${nextAction}
 
+            Available tools:
+            ${JSON.stringify(tools)}
+
             Provide a concise analysis of:
             1. Whether the planned next action is appropriate
-            2. A potential possible next action if the current one is not appropriate
-
+            2. A potential possible next action if the current one is not appropriate. Evaluate the possibility of calling an specific tool from the list above.
+            
             Format your response in a clear, structured way
         `;
 

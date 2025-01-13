@@ -6,19 +6,19 @@ const tools = [
     {
         type: 'function',
         function: {
-            name: 'query_schema_info',
-            description: 'Get information about database schema or OpenAPI specifications',
+            name: 'query_information',
+            description: 'Get information about various data sources such as databases, OpenAPI specifications, and application documentation.',
             parameters: {
                 type: 'object',
                 properties: {
                     query: {
                         type: 'string',
-                        description: 'The query about DB schema or API specification. Try to be as specific as possible i.g what is the name of the table for storing users? or what is the name of the endpoint for user login?',
+                        description: 'The query about the data source. Be specific, e.g., what is the name of the table for storing users? or what is the endpoint for user login?'
                     },
-                    schema_type: {
+                    source_type: {
                         type: 'string',
-                        enum: ['database', 'openapi'],
-                        description: 'Type of schema to query about'
+                        enum: ['mysql', 'openapi', 'documentation'],
+                        description: 'Type of source to query about'
                     },
                     max_tokens: {
                         type: 'integer',
@@ -26,7 +26,7 @@ const tools = [
                         default: 150
                     }
                 },
-                required: ['query', 'schema_type'],
+                required: ['query', 'source_type'],
             },
         }
     },
@@ -51,7 +51,7 @@ const tools = [
         type: 'function',
         function: {
             name: 'generate_sql_tool',
-            description: 'It sends a SQL query configuration to the client, use this tool each time the user asks for a SQL query, but only if you already called query_schema_info previously',
+            description: 'It sends a SQL query configuration to the client, use this tool each time the user asks for a SQL query, but only if you already called query_information previously',
             parameters: {
                 type: 'object',
                 properties: {
@@ -76,7 +76,7 @@ const tools = [
         type: 'function',
         function: {
             name: 'generate_curl_tool',
-            description: 'It sends a cURL configuration to the client, use this tool each time the user asks for a cURL command, but only if you already called query_schema_info previously. Ensure you supply the base URL, relative URL and method as minimum. Possible parameters: title, baseURL, relativeURL, method, query, payload',
+            description: 'It sends a cURL configuration to the client, use this tool each time the user asks for a cURL command, but only if you already called query_information previously. Ensure you supply the base URL, relative URL and method as minimum. Possible parameters: title, baseURL, relativeURL, method, query, payload',
             parameters: {
                 type: 'object',
                 properties: {

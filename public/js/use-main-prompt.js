@@ -146,7 +146,8 @@ export default function useMainPrompt() {
         });
 
         try {
-            const response = await fetch('/api/completion', {
+            const namespace = window.getCurrentNamespace();
+            const response = await fetch(`/api/ns/${namespace}/completion`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
