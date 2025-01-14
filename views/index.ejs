@@ -2,10 +2,10 @@
 
 <div class="flex justify-end">
     <select id="namespaceSelector" class="bg-white border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option value="default">Default</option>
-        <option value="openapi">OpenAPI</option>
-        <option value="mysql">MySQL</option>
-        <option value="citipav">CitiPAV</option>
+        <% const namespaces = process.env.PINECONE_NAMESPACES ? process.env.PINECONE_NAMESPACES.split(',') : ['default', 'openapi', 'mysql', 'citipav']; %>
+        <% namespaces.forEach(namespace => { %>
+            <option value="<%= namespace %>"><%= namespace %></option>
+        <% }); %>
     </select>
 </div>
 

@@ -23,6 +23,10 @@ if (process.env.AUTH_USERNAME && process.env.AUTH_PASSWORD) {
 
 app.set('view engine', 'ejs');
 
+// Read PINECONE_NAMESPACES from environment variables
+const pineconeNamespaces = process.env.PINECONE_NAMESPACES ? process.env.PINECONE_NAMESPACES.split(',') : ['default', 'openapi', 'mysql', 'citipav'];
+app.locals.pineconeNamespaces = pineconeNamespaces;
+
 global.app = app;
 require('./routes/http-routes');
 require('./routes/api-routes');

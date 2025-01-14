@@ -13,12 +13,7 @@ const tools = [
                 properties: {
                     query: {
                         type: 'string',
-                        description: 'The query about the data source. Be specific, e.g., what is the name of the table for storing users? or what is the endpoint for user login?'
-                    },
-                    source_type: {
-                        type: 'string',
-                        enum: ['mysql', 'openapi', 'documentation'],
-                        description: 'Type of source to query about'
+                        description: 'The query about the data source. Be specific, e.g., what is the name of the table for storing users? or what is the endpoint for user login? or what are the steps to achieve X?'
                     },
                     max_tokens: {
                         type: 'integer',

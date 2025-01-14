@@ -61,7 +61,7 @@ const computeNextStep = (stepName) => {
 // Actual function to query schema info using API calls
 async function query_information(query, schema_type, max_tokens = 150, namespace = 'default') {
     try {
-        const prompt = `Get information about ${schema_type === 'database' ? 'database schema' : 'OpenAPI specification'}: ${query}`;
+        const prompt = `Get information ${schema_type === 'default' ? '(database,openapi,product-documentation or similar)' : schema_type}: ${query}`;
 
         const response = await axios.post(getApiEndpoint(namespace), {
             prompt: prompt,
@@ -189,7 +189,7 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                         - Use it if you consider you have a proper answer.
                     
                     #### query_information:
-                        - Use this tool to get information about the OpenAPI specifications,database/mysql schemas, applications documentation or any other specifications related to business logic. Do not assume anything.
+                        - Use this tool to get information about the OpenAPI,database, productdocumentation or any other specifications related to business logic. Do not assume anything.
 
                     #### run_sql_tool: 
                         - Use it if the user requests to run a SQL query. 
@@ -325,7 +325,7 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                 }
 
                 if (toolName === 'query_information') {
-                    toolResponse = await query_information(toolArgs.query, toolArgs.schema_type, toolArgs.max_tokens, namespace);
+                    toolResponse = await query_information(toolArgs.query, namespace, toolArgs.max_tokens, namespace);
                 } 
 
                 if (toolName === 'generate_sql_tool') {
