@@ -235,13 +235,28 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
             details: JSON.stringify(response, null, 2)
         }) */
 
-        let updatedMessages
+        let updatedMessages = [...messages]
 
         if(response.error) {
             console.log('LLM RESPONSE ERROR', {
                 details: JSON.stringify(response, null, 2),
-                messages
+                messages,
+                error:{
+                    code: response.error.code,
+                    message: response.error.message,
+                    stack: response.error.stack
+                }
             })
+
+            if(response.error.code === 402) {
+                return getFinalResponse(`
+                    <div class="flex items-center justify-center">
+                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <span class="block sm:inline">${response.error.message}</span>
+                        </div>
+                    </div>`
+                )   
+            }
 
             //Add error to ctx
             updatedMessages = [
@@ -265,7 +280,7 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
         // If the LLM wants to call a tool
         if (responseMessage.tool_calls && responseMessage.tool_calls.length > 0) {
             
-            updatedMessages = [...messages, responseMessage];
+            updatedMessages = [...updatedMessages, responseMessage];
             
             // Handle all tool calls sequentially
             for (const toolCall of responseMessage.tool_calls) {
