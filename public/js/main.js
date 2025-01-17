@@ -49,7 +49,8 @@ const app = createApp({
         loadThread,
         deleteThread,
         renameThread,
-        canCreateNewThread
+        canCreateNewThread,
+        thinkingRef
     } = useMainPrompt();
 
     return {
@@ -74,7 +75,8 @@ const app = createApp({
       deleteThread,
       renameThread,
       socketRef,
-      canCreateNewThread
+      canCreateNewThread,
+      thinkingRef
     };
   },
 });

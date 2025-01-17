@@ -176,6 +176,7 @@ async function recursiveLLMCall(stepName = 'initial', prompt, options = {}, prev
                     - Always answer in the same language as the question
                     - keep your responses clear and concise
                     - Ensure your explanations are accurate and up-to-date with the latest standards.
+                    - If you used a tool like generate_* or run_*, you can mention it in the final answer, given the user would need to open the tools menu to view the new results there.
 
                     ### Final answer sections:
 

@@ -3,36 +3,27 @@
     <div class="bg-gray-100 p-4 border-b">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <div class="flex-1 flex space-x-4 overflow-x-auto py-2">
-                <button 
-                    @click="createThread" 
+                <button @click="createThread"
                     class="flex-shrink-0 bg-blue-500 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                    :disabled="!canCreateNewThread"
-                >
+                    :disabled="!canCreateNewThread">
                     New Chat
                 </button>
                 <template v-for="thread in threads" :key="thread.id">
-                    <div class="flex-shrink-0 group relative" :class="{'opacity-75': activeThreadId !== thread.id}" style="min-width: 200px; max-width: 400px;">
-                        <button 
-                            @click="loadThread(thread.id)" 
-                            class="bg-white border rounded-lg px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2" 
+                    <div class="flex-shrink-0 group relative" :class="{'opacity-75': activeThreadId !== thread.id}"
+                        style="min-width: 200px; max-width: 400px;">
+                        <button @click="loadThread(thread.id)"
+                            class="bg-white border rounded-lg px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-2"
                             :class="{'border-blue-500 bg-blue-100': activeThreadId === thread.id}"
-                            style="min-width: 200px; max-width: 400px; white-space: normal; overflow-wrap: break-word; padding-right: 4.5rem;"
-                        >
+                            style="min-width: 200px; max-width: 400px; white-space: normal; overflow-wrap: break-word; padding-right: 4.5rem;">
                             <span>{{ thread.title }}</span>
                         </button>
                         <div class="flex absolute right-2 top-1/2 -translate-y-1/2 space-x-1">
-                            <button 
-                                @click="renameThread(thread.id)"
-                                class="p-1 hover:bg-gray-100 rounded" 
-                                title="Rename"
-                            >
+                            <button @click="renameThread(thread.id)" class="p-1 hover:bg-gray-100 rounded"
+                                title="Rename">
                                 ✏️
                             </button>
-                            <button 
-                                @click="deleteThread(thread.id)"
-                                class="p-1 hover:bg-gray-100 rounded text-red-500" 
-                                title="Delete"
-                            >
+                            <button @click="deleteThread(thread.id)" class="p-1 hover:bg-gray-100 rounded text-red-500"
+                                title="Delete">
                                 🗑️
                             </button>
                         </div>
@@ -43,9 +34,7 @@
     </div>
 
     <!-- Chat History Section -->
-    <div class="flex-1 p-4 bg-gray-50 "
-    style="max-height: 55vh; overflow-y: auto;"
-    >
+    <div class="flex-1 p-4 bg-gray-50 " style="max-height: 55vh; overflow-y: auto;">
         <div class="max-w-4xl mx-auto space-y-4">
             <!-- Display chat history -->
             <template v-for="(message, index) in chatHistory" :key="index">
@@ -55,7 +44,7 @@
                         <p class="whitespace-pre-wrap">{{ message.content }}</p>
                     </div>
                 </div>
-                
+
                 <!-- Assistant Message -->
                 <div v-else-if="message.role === 'assistant'" class="flex justify-start">
                     <div class="bg-white border border-gray-200 rounded-lg py-2 px-4 max-w-[80%] shadow-sm">
@@ -70,12 +59,24 @@
                         <p class="whitespace-pre-wrap">{{ message.content }}</p>
                     </div>
                 </div>
+
+
             </template>
+
+          
 
             <!-- Current Output (if not in history) -->
             <div v-if="output && !chatHistory.length" class="flex justify-start">
                 <div class="bg-white border border-gray-200 rounded-lg py-2 px-4 max-w-[80%] shadow-sm">
                     <div class="prose prose-sm" v-html="output"></div>
+                </div>
+            </div>
+
+              <!-- Assistant Thinking Message -->
+              <div v-show="thinkingRef" class="flex justify-start">
+                <div class="bg-gray-100 border border-gray-200 rounded-lg py-1 px-2 max-w-[80%]">
+                    <p class="text-sm text-gray-500">Assistant last reasoning...</p>
+                    <p class="text-sm text-gray-500" v-html="thinkingRef"></p>
                 </div>
             </div>
         </div>
@@ -86,23 +87,16 @@
         <div class="max-w-4xl mx-auto">
             <!-- Error Message -->
             <p v-if="error" class="text-red-500 mb-2">{{ error }}</p>
-            
+
             <!-- Input Area -->
             <div class="relative">
-                <textarea 
-                    v-model="mainPrompt"
-                    @keydown.ctrl.enter="executePrompt"
+                <textarea v-model="mainPrompt" @keydown.ctrl.enter="executePrompt"
                     class="w-full border rounded-lg py-2 px-4 pr-24 resize-none focus:outline-none focus:border-blue-500"
-                    :class="{'opacity-50': loading}"
-                    rows="3"
-                    placeholder="Type your message here... (Ctrl+Enter to send)"
-                    :disabled="loading"
-                ></textarea>
-                <button 
-                    @click="executePrompt"
+                    :class="{'opacity-50': loading}" rows="3"
+                    placeholder="Type your message here... (Ctrl+Enter to send)" :disabled="loading"></textarea>
+                <button @click="executePrompt"
                     class="absolute bottom-2 right-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-4 py-1 text-sm"
-                    :disabled="loading"
-                >
+                    :disabled="loading">
                     <span v-if="loading">Sending...</span>
                     <span v-else>Send</span>
                 </button>

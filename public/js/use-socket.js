@@ -26,8 +26,8 @@ export default function useSocket() {
       data
     });
 
-    window.showToast(data);
-
+    //window.showToast(data);
+    window.mitt.emit('thinking', data);
   });
 
   socket.on('requestCurlItemComplete', (data) => {

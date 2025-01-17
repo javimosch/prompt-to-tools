@@ -8,6 +8,15 @@ export default function useMainPrompt() {
     const chatHistory = ref([]);
     const threads = ref([]);
     const activeThreadId = ref(null);
+    const thinkingRef = ref("")
+
+    window.mitt.on('thinking', (data) => {
+        thinkingRef.value = `
+            <italic>Thoughts: ${data.thoughts}</italic>
+            <br>
+            <strong>Next: ${data.nextAction}</strong>
+            `
+    })
 
     // Computed property to check if we can create a new thread
     const canCreateNewThread = computed(() => {
@@ -223,5 +232,6 @@ export default function useMainPrompt() {
         loadThread,
         deleteThread,
         renameThread,
+        thinkingRef
     };
 }
